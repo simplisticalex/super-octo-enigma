@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem; 
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -10,24 +10,29 @@ public class PlayerMovement : MonoBehaviour
 
     private CharacterController _controller;
     private Vector2 _moveInput;
-    private Vector3 _currentVelocity;
     private Animator _animator;
+
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
         _animator = GetComponent<Animator>();
     }
 
-    public void OnMove(InputAction.CallbackContext context)
+    public void OnMove(InputValue value)
     {
-        _moveInput = context.ReadValue<Vector2>();
+        _moveInput = value.Get<Vector2>();
+        Debug.Log("Сигнал от кнопок дошел! Ввод: " + _moveInput);
     }
 
     private void Update()
     {
         MovePlayer();
-        float horizontalSpeed = new Vector3(_moveInput.x, 0, _moveInput.y).magnitude;
-        _animator.SetFloat("Speed", horizontalSpeed);
+
+        if (_animator != null)
+        {
+            float horizontalSpeed = _moveInput.magnitude;
+            _animator.SetFloat("Speed", horizontalSpeed);
+        }
     }
 
     private void MovePlayer()
@@ -36,7 +41,6 @@ public class PlayerMovement : MonoBehaviour
 
         if (moveDirection.magnitude >= 0.1f)
         {
-
             float targetAngle = Mathf.Atan2(moveDirection.x, moveDirection.z) * Mathf.Rad2Deg;
             Quaternion targetRotation = Quaternion.Euler(0, targetAngle, 0);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _turnSpeed * Time.deltaTime);
@@ -46,13 +50,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (!_controller.isGrounded)
         {
-            _currentVelocity.y += Physics.gravity.y * Time.deltaTime;
+            _controller.Move(Vector3.down * 9.81f * Time.deltaTime);
         }
-        else
-        {
-            _currentVelocity.y = -0.5f;
-        }
-
-        _controller.Move(_currentVelocity * Time.deltaTime);
     }
 }
